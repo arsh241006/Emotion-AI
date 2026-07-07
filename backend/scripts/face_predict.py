@@ -1,27 +1,28 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
+
+from utils.preprocess import detect_faces, preprocess_face
+from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import load_model
 
 # Load trained model
-model = load_model("../saved_models/emotion_model.keras")
+model = load_model("../saved_models/emotion_model_v2.keras")
 
-# Emotion labels
 emotion_labels = [
-    'angry',
-    'disgust',
-    'fear',
-    'happy',
-    'neutral',
-    'sad',
-    'surprise'
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "neutral",
+    "sad",
+    "surprise"
 ]
-
-# Load OpenCV face detector
-face_detector = cv2.CascadeClassifier(
-    cv2.data.haarcascades +
-    "haarcascade_frontalface_default.xml"
-)
 
 # Image path
 image_path = "../test_images/angry.jpg"
@@ -33,35 +34,16 @@ if img is None:
     print("Image not found!")
     exit()
 
-# Convert to grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
 # Detect faces
-faces = face_detector.detectMultiScale(
-    gray,
-    scaleFactor=1.3,
-    minNeighbors=5
-)
+gray, faces = detect_faces(img)
 
 print("Faces found:", len(faces))
 
-# Predict emotion for each face
+# Predict emotion
 for (x, y, w, h) in faces:
 
-    # Crop face
-    face = gray[y:y+h, x:x+w]
+    face = preprocess_face(gray, x, y, w, h)
 
-    # Resize to model input size
-    face = cv2.resize(face, (48, 48))
-
-    # Normalize
-    face = face / 255.0
-
-    # Add batch and channel dimensions
-    face = np.expand_dims(face, axis=0)
-    face = np.expand_dims(face, axis=-1)
-
-    # Predict
     prediction = model.predict(face, verbose=0)
 
     predicted_class = np.argmax(prediction)
@@ -82,7 +64,7 @@ for (x, y, w, h) in faces:
         2
     )
 
-    # Draw label
+    # Draw prediction
     cv2.putText(
         img,
         f"{emotion} ({confidence:.1f}%)",
@@ -93,7 +75,7 @@ for (x, y, w, h) in faces:
         2
     )
 
-# Display result
+# Show result
 plt.figure(figsize=(8, 6))
 plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 plt.axis("off")
