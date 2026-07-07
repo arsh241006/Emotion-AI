@@ -153,7 +153,7 @@ Total trainable parameters:
 
 ---
 
-# Note:
+## Note:
 
 The trained model is not included due to file size limitations.
 It can be reproduced by running 02_training.ipynb.
