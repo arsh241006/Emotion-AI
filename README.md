@@ -56,8 +56,12 @@ Planned features:
 human-emotion-detection/
 │
 ├── assets/
-│   ├── accuracy.png
-│   └── loss.png
+|       ├── baseline_accuracy.png
+|       ├── baseline_loss.png
+|       ├── improved_accuracy.png
+|       ├── improved_loss.png
+|       ├── confusion_matrix_v1.png
+|       └── confusion_matrix_v2.png
 │
 ├── backend/
 │   ├── notebooks/
@@ -71,11 +75,12 @@ human-emotion-detection/
 ├── test_images/
 │
 ├── reports/
-│   ├── confusion_matrix.png
-│   └── classification_report.txt
+│   ├── classification_report.txt
+│   └── classification_report_v2.txt
 │
 ├── saved_models/
-│   └── emotion_model.keras
+│   |── emotion_model.keras
+|   └── emotion_model_v2.keras
 │
 ├── frontend/
 │
@@ -163,6 +168,11 @@ The model shows signs of overfitting after approximately 10 epochs, which motiva
 - Early Stopping
 - Deeper CNN architectures
 
+After training for 30 epochs:
+
+- Baseline CNN Validation Accuracy: 53.4%
+- Improved CNN Validation Accuracy: 59.5%
+
 ---
 
 ## Training Accuracy
@@ -177,7 +187,6 @@ The model shows signs of overfitting after approximately 10 epochs, which motiva
 
 ---
 
-## Current Progress
 
 ## Current Progress
 
