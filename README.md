@@ -14,12 +14,19 @@ This project aims to classify facial expressions into seven emotions:
 - Sad 😢
 - Surprise 😲
 
-The model is trained on the FER2013 dataset and will support:
+The project currently supports:
 
-- Image emotion detection
+- Single image emotion detection
+- Face detection using OpenCV Haar Cascades
+- Emotion prediction with confidence scores
+- Model evaluation using confusion matrix and classification report
+
+Planned features:
+
 - Real-time webcam emotion detection
-- Confidence score visualization
-- Interactive dashboard with analytics
+- Flask API backend
+- React frontend
+- Interactive analytics dashboard
 
 ---
 
@@ -48,19 +55,33 @@ The model is trained on the FER2013 dataset and will support:
 ```text
 human-emotion-detection/
 │
+├── assets/
+│   ├── accuracy.png
+│   └── loss.png
+│
 ├── backend/
 │   ├── notebooks/
-│   │   └── 01_dataset_exploration.ipynb
-│   ├── model/
-│   └── api/
+│   │   ├── 01_dataset_exploration.ipynb
+│   │   └── 02_training.ipynb
+│   │
+│   ├── predict.py
+│   ├── face_predict.py
+│   └── app.py
+│
+├── test_images/
+│
+├── reports/
+│   ├── confusion_matrix.png
+│   └── classification_report.txt
+│
+├── saved_models/
+│   └── emotion_model.keras
 │
 ├── frontend/
 │
 ├── dataset/
 │   ├── train/
 │   └── test/
-│
-├── saved_models/
 │
 ├── requirements.txt
 ├── README.md
@@ -97,21 +118,6 @@ dataset/
 
 ---
 
-## Current Progress
-
-- [x] Project setup
-- [x] Virtual environment setup
-- [x] Dataset exploration
-- [x] Emotion distribution analysis
-- [x] CNN architecture creation
-- [ ] Data preprocessing
-- [ ] Model training
-- [ ] Model evaluation
-- [ ] Web application
-- [ ] Real-time webcam detection
-- [ ] Dashboard and analytics
-
----
 
 ## CNN Architecture
 
@@ -143,6 +149,67 @@ Total trainable parameters:
 
 ---
 
+## Model Performance
+
+After training for 15 epochs:
+
+- Training Accuracy: ~61%
+- Validation Accuracy: ~53%
+
+The model shows signs of overfitting after approximately 10 epochs, which motivates further improvements using:
+
+- Data Augmentation
+- Batch Normalization
+- Early Stopping
+- Deeper CNN architectures
+
+---
+
+## Training Accuracy
+
+![Accuracy Curve](assets/accuracy.png)
+
+---
+
+## Training Loss
+
+![Loss Curve](assets/loss.png)
+
+---
+
+## Current Progress
+
+## Current Progress
+
+- [x] Project setup
+- [x] Dataset exploration
+- [x] Data preprocessing
+- [x] CNN model creation
+- [x] Model training
+- [x] Model evaluation
+- [x] Single image prediction
+- [x] Face detection pipeline
+- [ ] Real-time webcam emotion detection
+- [ ] Flask API
+- [ ] React frontend
+- [ ] Analytics dashboard
+- [ ] Improved CNN architecture
+
+---
+
+## Sample Results
+
+### Happy Image
+Prediction: Happy (100%)
+
+### Angry Image
+Prediction: Angry (64.90%)
+
+### Sad Image
+Prediction: Sad (37.29%)
+
+---
+
 ## Future Improvements
 
 - Data augmentation
@@ -157,6 +224,27 @@ Total trainable parameters:
 
 The trained model is not included due to file size limitations.
 It can be reproduced by running 02_training.ipynb.
+
+---
+
+## Evaluation
+
+Validation Accuracy: ~53%
+
+The model performs well on some emotions such as Happy and Angry but struggles on Sad and Neutral expressions due to similarities between these classes and limitations of the FER2013 dataset.
+
+---
+
+## Key Learnings
+
+- Convolutional Neural Networks (CNNs)
+- Image preprocessing and normalization
+- Data generators in TensorFlow/Keras
+- Model evaluation using confusion matrices and classification reports
+- Face detection using OpenCV
+- Deep learning workflow from training to inference and deployment
+
+---
 
 ## Author
 
