@@ -1,0 +1,94 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-card: 10px;
+
+  --color-background: #0A0A0B;
+  --color-surface: #141416;
+  --color-surface-raised: #1C1C1F;
+  --color-border: #2A2A2E;
+  --color-border-strong: #3A3A3F;
+
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A1A1AA;
+  --color-text-tertiary: #6B6B70;
+
+  --color-accent: #FF6A1A;
+  --color-accent-hover: #FF8A47;
+  --color-accent-dim: rgba(255, 106, 26, 0.12);
+
+  --color-emotion-happy: #E8E8EA;
+  --color-emotion-sad: #8A8A8F;
+  --color-emotion-angry: #D4D4D8;
+  --color-emotion-fear: #6B6B70;
+  --color-emotion-surprise: #F5F5F5;
+  --color-emotion-disgust: #A1A1AA;
+  --color-emotion-neutral: #52525B;
+
+  /* shadcn semantic aliases (kept for library components) */
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: #0A0A0B;
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface-raised);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent-foreground: #0A0A0B;
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #F5F5F5;
+  --color-input: var(--color-border);
+  --color-ring: var(--color-accent);
+  --color-ring-offset-background: var(--color-background);
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background-color: var(--color-background);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: #0A0A0B;
+  }
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+@utility surface-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
