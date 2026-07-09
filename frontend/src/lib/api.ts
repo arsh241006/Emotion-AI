@@ -9,8 +9,7 @@ export const api = axios.create({
 export interface PredictionResult {
   emotion: Emotion;
   confidence: number;
-  // Full softmax vector — only present once the backend is updated
-  // to return probabilities for every class.
+  inference_time: number;      // <-- add this
   probabilities?: Record<Emotion, number>;
 }
 

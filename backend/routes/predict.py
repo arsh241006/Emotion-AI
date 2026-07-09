@@ -1,3 +1,4 @@
+import time
 from flask import Blueprint, request, jsonify
 import cv2
 import numpy as np
@@ -45,7 +46,13 @@ def predict():
 
     face = preprocess_face(gray, x, y, w, h)
 
+    start_time = time.perf_counter()
+
     prediction = model.predict(face, verbose=0)[0]
+
+    end_time = time.perf_counter()
+
+    inference_time = (end_time - start_time) * 1000
 
     print(prediction)
     print(np.max(prediction))
@@ -61,5 +68,6 @@ def predict():
     return jsonify({
         "emotion": emotion,
         "confidence": round(confidence, 2),
-        "probabilities": probabilities
+        "probabilities": probabilities,
+        "inference_time": round(inference_time, 2)
     })

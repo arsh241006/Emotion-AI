@@ -1,0 +1,51 @@
+export const classificationReport = [
+  {
+    emotion: "angry",
+    precision: 0.48,
+    recall: 0.57,
+    f1: 0.52,
+    support: 958,
+  },
+  {
+    emotion: "disgust",
+    precision: 0.90,
+    recall: 0.08,
+    f1: 0.15,
+    support: 111,
+  },
+  {
+    emotion: "fear",
+    precision: 0.44,
+    recall: 0.25,
+    f1: 0.32,
+    support: 1024,
+  },
+  {
+    emotion: "happy",
+    precision: 0.80,
+    recall: 0.84,
+    f1: 0.82,
+    support: 1774,
+  },
+  {
+    emotion: "neutral",
+    precision: 0.54,
+    recall: 0.60,
+    f1: 0.57,
+    support: 1233,
+  },
+  {
+    emotion: "sad",
+    precision: 0.47,
+    recall: 0.44,
+    f1: 0.45,
+    support: 1247,
+  },
+  {
+    emotion: "surprise",
+    precision: 0.65,
+    recall: 0.80,
+    f1: 0.72,
+    support: 831,
+  },
+];

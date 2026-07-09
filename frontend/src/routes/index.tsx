@@ -15,10 +15,10 @@ export const Route = createFileRoute("/")({
 // Rotates through sample outputs on the hero card.
 // Clearly labeled "SAMPLE OUTPUT" — not a real inference.
 const SAMPLES = [
-  { emotion: "happy" as const, confidence: 0.91 },
-  { emotion: "surprise" as const, confidence: 0.78 },
-  { emotion: "neutral" as const, confidence: 0.63 },
-  { emotion: "sad" as const, confidence: 0.72 },
+  { emotion: "happy" as const, confidence: 82.3 },
+  { emotion: "surprise" as const, confidence: 56.7 },
+  { emotion: "neutral" as const, confidence: 78.1 },
+  { emotion: "sad" as const, confidence: 65.7 },
 ];
 
 const HERO_TRACE_NODES = [

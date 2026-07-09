@@ -4,6 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
@@ -13,15 +14,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { StatCard } from "@/components/ui/StatCard";
 import { CountUp } from "@/components/ui/CountUp";
+import { ChartTooltip } from "@/components/ui/ChartTooltip";
 import { EMOTION_META, EMOTIONS, MODEL_STATS, type Emotion } from "@/config/modelStats";
-import { perClassAccuracy, trainingCurves } from "@/data/mockDashboard";
 import { usePredictionStore } from "@/store/predictionStore";
 import { EmotionBadge } from "@/components/prediction/EmotionBadge";
 import { ProgressRing } from "@/components/ui/ProgressRing";
+import { classAccuracy } from "@/data/classAccuracy";
+import { trainingMetrics } from "@/data/trainingMetrics";
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -36,22 +39,36 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-const AXIS = { stroke: "#3A3A3F", fontSize: 10 };
+// Softer, legible axis text — was #3A3A3F (nearly invisible on dark bg)
+const AXIS = { stroke: "#9A9AA4", fontSize: 12, fontFamily: "inherit" };
+// Grid recedes into the background instead of competing with bars
+const GRID_STROKE = "#1E1E22";
+const TOOLTIP_CURSOR = { fill: "rgba(255,106,26,0.08)" };
+const ACCENT = "#FF6A1A";
+// Orange-family palette so pie slices stay on-theme with the bar chart
+// while still being distinguishable from each other
+const ORANGE_SHADES = ["#FF6A1A", "#FFA24D", "#E85D04", "#FFC98A", "#C9450C", "#FF8C42", "#8A2E00"];
 
 function DashboardPage() {
   const current = usePredictionStore((s) => s.current);
   const history = usePredictionStore((s) => s.history);
+  const [activeSlice, setActiveSlice] = useState<number | null>(null);
 
   const distribution = useMemo(() => {
     const counts: Record<Emotion, number> = Object.fromEntries(EMOTIONS.map((e) => [e, 0])) as Record<Emotion, number>;
     history.forEach((h) => { counts[h.emotion]++; });
-    return EMOTIONS.map((e) => ({ emotion: e, count: counts[e], fill: EMOTION_META[e].color }))
-      .filter((d) => d.count > 0);
+    return EMOTIONS.map((e, i) => ({
+      emotion: e,
+      count: counts[e],
+      fill: ORANGE_SHADES[i % ORANGE_SHADES.length],
+    })).filter((d) => d.count > 0);
   }, [history]);
 
   const avgConfidence = history.length
     ? history.reduce((a, h) => a + h.confidence, 0) / history.length
     : 0;
+
+  const perClassAccuracy = classAccuracy;
 
   return (
     <PageShell
@@ -78,11 +95,15 @@ function DashboardPage() {
         <StatCard
           label="Inference time"
           value={
-            MODEL_STATS.inferenceMs !== null
-              ? <CountUp end={MODEL_STATS.inferenceMs} suffix="ms" />
-              : <span className="text-text-tertiary text-sm">not measured</span>
+            current ? (
+              <CountUp end={current.inference_time} decimals={2} suffix=" ms" />
+            ) : (
+              <span className="text-text-tertiary text-sm">
+                Run a prediction
+              </span>
+            )
           }
-          hint={MODEL_STATS.inferenceMs === null ? "measure and set in modelStats.ts" : undefined}
+          hint="Latest prediction"
         />
         <StatCard
           label="Images processed"
@@ -127,15 +148,34 @@ function DashboardPage() {
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={perClassAccuracy} layout="vertical" margin={{ left: 8, right: 16 }}>
-                <CartesianGrid stroke="#2A2A2E" horizontal={false} />
+                <defs>
+                  <linearGradient id="barFill" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={ACCENT} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={ACCENT} stopOpacity={1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                    stroke={GRID_STROKE}
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                />
                 <XAxis type="number" domain={[0, 100]} {...AXIS} />
-                <YAxis type="category" dataKey="emotion" width={70} {...AXIS} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "#1C1C1F" }} />
-                <Bar dataKey="accuracy" radius={[0, 4, 4, 0]}>
-                  {perClassAccuracy.map((r) => (
-                    <Cell key={r.emotion} fill={EMOTION_META[r.emotion as Emotion].color} />
-                  ))}
-                </Bar>
+                <YAxis
+                    type="category"
+                    dataKey="emotion"
+                    width={78}
+                    tick={{ fill: "#C9C9D1", fontSize: 12, fontFamily: "inherit" }}
+                    axisLine={{ stroke: GRID_STROKE }}
+                    tickLine={false}
+                />
+                <Tooltip content={<ChartTooltip />} cursor={TOOLTIP_CURSOR} />
+                <Bar
+                    dataKey="accuracy"
+                    radius={[0, 6, 6, 0]}
+                    animationDuration={1800}
+                    fill="url(#barFill)"
+                    maxBarSize={22}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -148,17 +188,20 @@ function DashboardPage() {
       {/* Training curves */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <ChartCard title="Training Accuracy">
-          <img
-              src="/images/improved_accuracy.png"
-              alt="Training Accuracy"
-              className="h-full w-full rounded object-contain"
+          <TrainingLineChart
+              data={trainingMetrics}
+              trainKey="trainAcc"
+              valKey="valAcc"
+              isPercent
+              domain={[0, 1]}
           />
         </ChartCard>
         <ChartCard title="Training Loss">
-          <img
-              src="/images/improved_loss.png"
-              alt="Training Loss"
-              className="h-full w-full rounded object-contain"
+          <TrainingLineChart
+              data={trainingMetrics}
+              trainKey="trainLoss"
+              valKey="valLoss"
+              domain={[0, 2]}
           />
         </ChartCard>
       </div>
@@ -173,10 +216,53 @@ function DashboardPage() {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={distribution} dataKey="count" nameKey="emotion" innerRadius={40} outerRadius={80} stroke="#0A0A0B">
-                    {distribution.map((d) => <Cell key={d.emotion} fill={d.fill} />)}
+                  <defs>
+                    {distribution.map((d) => (
+                      <radialGradient
+                          key={d.emotion}
+                          id={`pieGrad-${d.emotion}`}
+                          cx="35%"
+                          cy="35%"
+                          r="75%"
+                      >
+                        <stop offset="0%" stopColor={d.fill} stopOpacity={0.55} />
+                        <stop offset="100%" stopColor={d.fill} stopOpacity={1} />
+                      </radialGradient>
+                    ))}
+                  </defs>
+                  <Pie
+                      data={distribution}
+                      dataKey="count"
+                      nameKey="emotion"
+                      innerRadius={40}
+                      outerRadius={80}
+                      stroke="#0A0A0B"
+                      strokeWidth={2}
+                      paddingAngle={2}
+                      onMouseEnter={(_, i) => setActiveSlice(i)}
+                      onMouseLeave={() => setActiveSlice(null)}
+                  >
+                    {distribution.map((d, i) => (
+                      <Cell
+                          key={d.emotion}
+                          fill={`url(#pieGrad-${d.emotion})`}
+                          opacity={activeSlice === null || activeSlice === i ? 1 : 0.35}
+                          style={{ transition: "opacity 150ms ease" }}
+                      />
+                    ))}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
+                  <Tooltip content={<ChartTooltip />} cursor={false} />
+                  <Legend
+                      verticalAlign="bottom"
+                      height={28}
+                      iconType="circle"
+                      iconSize={8}
+                      formatter={(value) => (
+                        <span className="mono text-[10px] uppercase tracking-widest text-text-tertiary">
+                          {value}
+                        </span>
+                      )}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -191,7 +277,7 @@ function DashboardPage() {
           <div className="mono mb-4 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
             <span>Recent predictions</span>
             <span>
-              avg confidence <span className="text-text-primary">{(avgConfidence * 100).toFixed(1)}%</span>
+              avg confidence <span className="text-text-primary">{(avgConfidence).toFixed(1)}%</span>
             </span>
           </div>
           {history.length ? (
@@ -207,7 +293,10 @@ function DashboardPage() {
                 </thead>
                 <tbody className="mono">
                   {history.map((h, i) => (
-                    <tr key={i} className="border-t border-border">
+                    <tr
+                        key={i}
+                        className="border-t border-border transition-colors hover:bg-white/[0.03]"
+                    >
                       <td className="py-2 text-text-tertiary">
                         {new Date(h.timestamp).toLocaleTimeString()}
                       </td>
@@ -215,7 +304,7 @@ function DashboardPage() {
                         <EmotionBadge emotion={h.emotion} />
                       </td>
                       <td className="py-2 text-text-primary tabular-nums">
-                        {(h.confidence * 100).toFixed(1)}%
+                        {(h.confidence).toFixed(1)}%
                       </td>
                       <td className="py-2 truncate text-text-secondary">{h.imageFilename}</td>
                     </tr>
@@ -235,21 +324,95 @@ function DashboardPage() {
   );
 }
 
-const tooltipStyle = {
-  background: "#141416",
-  border: "1px solid #2A2A2E",
-  borderRadius: 6,
-  fontSize: 11,
-  color: "#F5F5F5",
-} as const;
-
 function ChartCard({ title, children }: { title: string; children: React.ReactElement }) {
   return (
     <div className="surface-card p-6">
       <div className="mono mb-4 text-[10px] uppercase tracking-[0.2em] text-text-tertiary">{title}</div>
-      <div className="h-56">
-        <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
-      </div>
+      <div className="h-56">{children}</div>
     </div>
+  );
+}
+
+function TrainingLineChart({
+  data,
+  trainKey,
+  valKey,
+  isPercent,
+  domain,
+}: {
+  data: typeof trainingMetrics;
+  trainKey: "trainAcc" | "trainLoss";
+  valKey: "valAcc" | "valLoss";
+  isPercent?: boolean;
+  domain: [number, number];
+}) {
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+
+  const toggle = (dataKey: string) =>
+    setHidden((h) => ({ ...h, [dataKey]: !h[dataKey] }));
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+        <defs>
+          <linearGradient id={`lineGrad-${valKey}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={ACCENT} stopOpacity={0.55} />
+            <stop offset="100%" stopColor={ACCENT} stopOpacity={1} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid stroke={GRID_STROKE} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+            dataKey="epoch"
+            {...AXIS}
+            tickLine={false}
+            axisLine={{ stroke: GRID_STROKE }}
+            label={{ value: "epoch", position: "insideBottomRight", offset: -2, fill: "#6E6E78", fontSize: 10 }}
+        />
+        <YAxis
+            {...AXIS}
+            domain={domain}
+            tickLine={false}
+            axisLine={{ stroke: GRID_STROKE }}
+            tickFormatter={(v) => (isPercent ? `${Math.round(v * 100)}%` : v.toFixed(1))}
+            width={40}
+        />
+        <Tooltip
+            content={<ChartTooltip />}
+            cursor={{ stroke: ACCENT, strokeOpacity: 0.15, strokeWidth: 24 }}
+        />
+        <Legend
+            onClick={(e) => toggle(e.dataKey as string)}
+            iconType="plainline"
+            iconSize={16}
+            formatter={(value) => (
+              <span className="mono cursor-pointer select-none text-[10px] uppercase tracking-widest text-text-tertiary hover:text-text-primary">
+                {value}
+              </span>
+            )}
+        />
+        <Line
+            type="monotone"
+            dataKey={trainKey}
+            name="train"
+            stroke="#8A5A38"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, fill: "#FFA25A", stroke: "#0A0A0B", strokeWidth: 2 }}
+            hide={hidden[trainKey]}
+            animationDuration={1400}
+        />
+        <Line
+            type="monotone"
+            dataKey={valKey}
+            name="validation"
+            stroke={`url(#lineGrad-${valKey})`}
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{ r: 5, fill: ACCENT, stroke: "#0A0A0B", strokeWidth: 2 }}
+            hide={hidden[valKey]}
+            animationDuration={1800}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }

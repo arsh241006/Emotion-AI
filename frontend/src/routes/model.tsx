@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { NetworkDiagram, type DiagramNode } from "@/components/diagram/NetworkDiagram";
-import { classificationReport, trainingCurves } from "@/data/mockDashboard";
+import { classificationReport } from "@/data/classificationReport";
 import { EMOTION_META, type Emotion } from "@/config/modelStats";
+import { confusionMatrix, emotions } from "@/data/confusionMatrix";
 import {
   CartesianGrid,
   Line,
@@ -87,46 +88,91 @@ function ModelPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Training vs. validation accuracy">
-          <LineChart data={trainingCurves}>
-            <CartesianGrid stroke="#2A2A2E" vertical={false} />
-            <XAxis dataKey="epoch" {...AXIS} />
-            <YAxis domain={[0, 1]} tickFormatter={(v) => `${Math.round(v * 100)}%`} {...AXIS} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line type="monotone" dataKey="trainAcc" stroke="#F5F5F5" dot={false} strokeWidth={1.5} name="train" />
-            <Line type="monotone" dataKey="valAcc" stroke="#FF6A1A" dot={false} strokeWidth={1.5} name="val" />
-          </LineChart>
-        </ChartCard>
-        <ChartCard title="Training vs. validation loss">
-          <LineChart data={trainingCurves}>
-            <CartesianGrid stroke="#2A2A2E" vertical={false} />
-            <XAxis dataKey="epoch" {...AXIS} />
-            <YAxis {...AXIS} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line type="monotone" dataKey="trainLoss" stroke="#F5F5F5" dot={false} strokeWidth={1.5} name="train" />
-            <Line type="monotone" dataKey="valLoss" stroke="#FF6A1A" dot={false} strokeWidth={1.5} name="val" />
-          </LineChart>
-        </ChartCard>
-      </div>
-
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.3fr]">
         <div className="surface-card p-6">
           <div className="mono mb-4 text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
             Confusion matrix
           </div>
-          <div className="flex aspect-square items-center justify-center rounded-md border border-dashed border-border-strong bg-surface-raised">
-            {/* Load a real /assets/confusion_matrix.png produced at training time. */}
-            <div className="p-6 text-center">
-              <div className="mono text-[10px] uppercase tracking-widest text-text-tertiary">
-                image not provided
-              </div>
-              <p className="mt-2 max-w-xs text-xs text-text-secondary">
-                Drop <code className="mono">public/assets/confusion_matrix.png</code> from your training
-                run and it will render here. Live-heatmap values aren&apos;t exposed by the API.
-              </p>
-            </div>
-          </div>
+          <div className="overflow-auto">
+        <table className="border-separate border-spacing-1">
+          <thead>
+            <tr>
+              <th></th>
+
+              {emotions.map((emotion) => (
+                <th
+                  key={emotion}
+                  className="
+                    px-3
+                    py-2
+                    mono
+                    text-[10px]
+                    uppercase
+                    tracking-widest
+                    text-text-tertiary
+                    font-normal
+                  "
+                >
+                  {emotion}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {confusionMatrix.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                <td
+                  className="
+                    pr-4
+                    mono
+                    text-[10px]
+                    uppercase
+                    tracking-widest
+                    text-text-tertiary
+                    whitespace-nowrap
+                  "
+                >
+                  {emotions[rowIndex]}
+                </td>
+
+                {row.map((value, colIndex) => {
+                  const max = 1500;
+                  const intensity = value / max;
+                  const diagonal = rowIndex === colIndex;
+
+                  return (
+                    <td
+                      key={colIndex}
+                      className="
+                        h-11
+                        w-11
+                        rounded-lg
+                        text-center
+                        text-xs
+                        font-semibold
+                        transition-all
+                        duration-200
+                        hover:scale-110
+                        cursor-pointer
+                      "
+                      style={{
+                        background: diagonal
+                          ? `rgba(255,122,26,${0.18 + intensity * 0.82})`
+                          : `rgba(255,255,255,${0.03 + intensity * 0.16})`,
+                        color: "#F5F5F5",
+                      }}
+                      title={`${emotions[rowIndex]} → ${emotions[colIndex]} : ${value}`}
+                    >
+                      {value}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
         </div>
 
         <div className="surface-card p-6">
@@ -145,7 +191,16 @@ function ModelPage() {
             </thead>
             <tbody className="mono">
               {classificationReport.map((r) => (
-                <tr key={r.emotion} className="border-t border-border">
+                <tr
+                    key={r.emotion}
+                    className="
+                        border-t
+                        border-border
+                        transition-colors
+                        duration-200
+                        hover:bg-white/5
+                    "
+                >
                   <td className="py-2">
                     <span className="inline-flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: EMOTION_META[r.emotion as Emotion].color }} />
@@ -160,9 +215,9 @@ function ModelPage() {
               ))}
             </tbody>
           </table>
-          <p className="mono mt-4 text-[10px] uppercase tracking-widest text-text-tertiary">
+          {/* <p className="mono mt-4 text-[10px] uppercase tracking-widest text-text-tertiary">
             values above are illustrative — replace with real report from training
-          </p>
+          </p> */}
         </div>
       </div>
     </PageShell>

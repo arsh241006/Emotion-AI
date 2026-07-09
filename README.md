@@ -1,6 +1,6 @@
 # Human Emotion Detection using CNN and Deep Learning
 
-A deep learning project that detects human emotions from facial expressions using Convolutional Neural Networks (CNNs) and the FER2013 dataset.
+EmotionAI is a full-stack facial emotion recognition system built with TensorFlow, Flask, React, and OpenCV. It classifies facial expressions into seven emotions and provides an interactive dashboard for model evaluation, prediction analytics, and CNN visualization.
 
 ## Project Overview
 
@@ -14,39 +14,60 @@ This project aims to classify facial expressions into seven emotions:
 - Sad 😢
 - Surprise 😲
 
-The project currently supports:
+---
 
-- Single image emotion detection
-- Face detection using OpenCV Haar Cascades
-- Emotion prediction with confidence scores
-- Model evaluation using confusion matrix and classification report
+## Features
 
-Planned features:
+### Deep Learning
+- CNN trained on FER-2013
+- Seven emotion classification
+- OpenCV Haar Cascade face detection
+- Confidence scores
+- Confusion matrix
+- Classification report
 
-- Real-time webcam emotion detection
-- Flask API backend
-- React frontend
-- Interactive analytics dashboard
+### Backend
+- Flask REST API
+- Multipart image upload
+- JSON predictions
+- Inference time measurement
+- Class probability output
+
+### Frontend
+- React + TypeScript
+- Modern dark dashboard
+- Live prediction interface
+- CNN architecture visualization
+- Model evaluation page
+- Analytics dashboard
+- Prediction history
+- Interactive charts
 
 ---
 
 ## Tech Stack
 
-### Machine Learning
-- Python
-- TensorFlow / Keras
-- NumPy
-- Pandas
-- OpenCV
-- Scikit-learn
+### Frontend
+React
+TypeScript
+TanStack Router
+TailwindCSS
+Recharts
+Axios
+Zustand
 
-### Visualization
-- Matplotlib
-- Seaborn
+### Backend
+Flask
+TensorFlow
+OpenCV
+NumPy
 
-### Web Development (Planned)
-- Flask/FastAPI
-- React
+### ML
+TensorFlow/Keras
+Scikit-learn
+Pandas
+Matplotlib
+Seaborn
 
 ---
 
@@ -187,22 +208,19 @@ After training for 30 epochs:
 
 ---
 
+## Project Status
 
-## Current Progress
-
-- [x] Project setup
-- [x] Dataset exploration
-- [x] Data preprocessing
-- [x] CNN model creation
-- [x] Model training
-- [x] Model evaluation
-- [x] Single image prediction
-- [x] Face detection pipeline
-- [ ] Real-time webcam emotion detection
-- [ ] Flask API
-- [ ] React frontend
-- [ ] Analytics dashboard
-- [ ] Improved CNN architecture
+- [x] CNN model
+- [x] Improved CNN
+- [x] Flask REST API
+- [x] React frontend
+- [x] Interactive dashboard
+- [x] CNN architecture visualization
+- [x] Confusion matrix
+- [x] Classification report
+- [x] Live image prediction
+- [ ] Webcam inference
+- [ ] Deployment
 
 ---
 

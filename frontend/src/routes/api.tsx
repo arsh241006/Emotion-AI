@@ -50,10 +50,20 @@ image=<binary jpeg/png>`}
         <CodeBlock
           title="Response · 200 OK"
           code={`{
-  "emotion": "happy",
-  "confidence": 0.9123
-  // "probabilities": { ... }  // planned — full softmax across 7 classes
-}`}
+    "confidence": 76.63,
+    "emotion": "angry",
+    "inference_time": 310.77,
+    "probabilities": {
+        "angry": 76.63,
+        "disgust": 1.33,
+        "fear": 18.38,
+        "happy": 0.79,
+        "neutral": 0.05,
+        "sad": 0.94,
+        "surprise": 1.88
+    }
+}
+`}
         />
       </div>
 
