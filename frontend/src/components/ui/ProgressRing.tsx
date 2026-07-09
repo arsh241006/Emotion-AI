@@ -9,7 +9,8 @@ interface Props {
 }
 
 export function ProgressRing({ value, size = 140, stroke = 8, className, label }: Props) {
-  const v = Math.max(0, Math.min(1, value));
+  const percentage = Math.max(0, Math.min(100, value));
+  const v = percentage / 100;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * v;
@@ -31,7 +32,7 @@ export function ProgressRing({ value, size = 140, stroke = 8, className, label }
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="mono text-2xl text-text-primary tabular-nums">{(v * 100).toFixed(1)}%</span>
+        <span className="mono text-2xl text-text-primary tabular-nums">{percentage.toFixed(1)}%</span>
         {label && <span className="mt-0.5 text-[10px] uppercase tracking-widest text-text-tertiary">{label}</span>}
       </div>
     </div>

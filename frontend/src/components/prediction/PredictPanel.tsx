@@ -8,6 +8,9 @@ import { NetworkDiagram } from "@/components/diagram/NetworkDiagram";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { EMOTION_META } from "@/config/modelStats";
 
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 const PIPELINE_NODES = [
   { id: "img",   label: "Image",       sub: "raw upload",    x: 6,  y: 55 },
   { id: "face",  label: "Face detect", sub: "OpenCV",        x: 22, y: 30 },
@@ -22,19 +25,13 @@ const PIPELINE_EDGES = PIPELINE_NODES.slice(0, -1).map((n, i) => ({
   to: PIPELINE_NODES[i + 1].id,
 }));
 
-const STAGES = [
-  "Loading model…",
-  "Detecting face…",
-  "Running inference…",
-  "Computing probabilities…",
-];
-
 export function PredictPanel() {
   const [tab, setTab] = useState<"upload" | "webcam">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [stage, setStage] = useState(-1);
+  const [isAnimating, setIsAnimating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const stageTimer = useRef<number | null>(null);
   const mutation = usePredictEmotion();
@@ -51,24 +48,48 @@ export function PredictPanel() {
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
-  const runPredict = () => {
-    if (!file || !previewUrl) return;
-    setStage(0);
-    // Staged loading — advances while the real request is in flight.
-    if (stageTimer.current) window.clearInterval(stageTimer.current);
-    stageTimer.current = window.setInterval(() => {
-      setStage((s) => (s < STAGES.length - 1 ? s + 1 : s));
-    }, 550);
-    mutation.mutate(
-      { file, previewUrl },
-      {
-        onSettled: () => {
-          if (stageTimer.current) window.clearInterval(stageTimer.current);
-          setStage(STAGES.length - 1);
-        },
-      }
-    );
-  };
+const runPredict = async () => {
+  if (!file || !previewUrl) return;
+
+  setIsAnimating(true);
+
+  try {
+    setStage(0); // Image
+    await sleep(300);
+
+    setStage(1); // Face Detection
+    await sleep(350);
+
+    setStage(2); // Crop
+    await sleep(350);
+
+    setStage(3); // Resize
+    await sleep(350);
+
+    setStage(4); // Normalize
+    await sleep(350);
+
+    // Backend request starts here
+    const predictionPromise = mutation.mutateAsync({
+      file,
+      previewUrl,
+    });
+
+    setStage(5); // CNN
+    await sleep(500);
+
+    await predictionPromise;
+
+    setStage(6); // Softmax
+    await sleep(500);
+
+    setIsAnimating(false);
+
+  } catch (err) {
+    console.error(err);
+    setIsAnimating(false);
+  }
+};
 
   const clear = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -79,11 +100,7 @@ export function PredictPanel() {
   };
 
   // Map stage to diagram active index (roughly proportional).
-  const diagramActive =
-    mutation.isSuccess ? PIPELINE_NODES.length - 1
-    : stage < 0 ? -1
-    : Math.min(PIPELINE_NODES.length - 1, Math.round(((stage + 1) / STAGES.length) * PIPELINE_NODES.length) - 1);
-
+  const diagramActive = Math.max(0, stage);
   const result = mutation.data;
   const meta = result ? EMOTION_META[result.emotion] : null;
 
@@ -213,8 +230,19 @@ export function PredictPanel() {
           <div className="mono mb-4 flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-text-tertiary">
             <span>Inference pipeline</span>
             <span aria-live="polite">
-              {mutation.isPending && stage >= 0 && STAGES[stage]}
-              {mutation.isSuccess && "Complete"}
+              {mutation.isPending && stage >= 0 && (
+                <>
+                  {stage === 0 && "Loading image..."}
+                  {stage === 1 && "Detecting face..."}
+                  {stage === 2 && "Cropping face..."}
+                  {stage === 3 && "Resizing..."}
+                  {stage === 4 && "Normalizing..."}
+                  {stage === 5 && "Running CNN..."}
+                  {stage >= 6 && "Computing probabilities..."}
+                </>
+)}
+
+{mutation.isSuccess && "Complete"}
               {mutation.isError && (
                 <span className="text-accent">Request failed — is the API running?</span>
               )}
@@ -242,10 +270,19 @@ export function PredictPanel() {
             </div>
           )}
 
-          {mutation.isPending && (
+          {isAnimating && (
             <div className="flex h-56 flex-col items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
-              <div className="mono mt-4 text-xs text-text-secondary">{STAGES[Math.max(0, stage)]}</div>
+
+              <div className="mono mt-4 text-xs text-text-secondary">
+                {stage === 0 && "Loading image..."}
+                {stage === 1 && "Detecting face..."}
+                {stage === 2 && "Cropping face..."}
+                {stage === 3 && "Resizing image..."}
+                {stage === 4 && "Normalizing pixels..."}
+                {stage === 5 && "Running CNN inference..."}
+                {stage >= 6 && "Computing probabilities..."}
+              </div>
             </div>
           )}
 

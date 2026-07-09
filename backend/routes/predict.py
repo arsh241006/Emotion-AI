@@ -45,12 +45,21 @@ def predict():
 
     face = preprocess_face(gray, x, y, w, h)
 
-    prediction = model.predict(face, verbose=0)
+    prediction = model.predict(face, verbose=0)[0]
+
+    print(prediction)
+    print(np.max(prediction))
 
     emotion = emotion_labels[np.argmax(prediction)]
     confidence = float(np.max(prediction) * 100)
 
+    probabilities = {
+        label: round(float(prob) * 100, 2)
+        for label, prob in zip(emotion_labels, prediction)
+    }
+
     return jsonify({
         "emotion": emotion,
-        "confidence": round(confidence, 2)
+        "confidence": round(confidence, 2),
+        "probabilities": probabilities
     })

@@ -23,6 +23,7 @@ import { usePredictionStore } from "@/store/predictionStore";
 import { EmotionBadge } from "@/components/prediction/EmotionBadge";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 
+
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
@@ -146,25 +147,19 @@ function DashboardPage() {
 
       {/* Training curves */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Accuracy over epochs">
-          <LineChart data={trainingCurves}>
-            <CartesianGrid stroke="#2A2A2E" vertical={false} />
-            <XAxis dataKey="epoch" {...AXIS} />
-            <YAxis domain={[0, 1]} tickFormatter={(v) => `${Math.round(v * 100)}%`} {...AXIS} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line type="monotone" dataKey="trainAcc" stroke="#F5F5F5" dot={false} strokeWidth={1.5} name="train" />
-            <Line type="monotone" dataKey="valAcc" stroke="#FF6A1A" dot={false} strokeWidth={1.5} name="val" />
-          </LineChart>
+        <ChartCard title="Training Accuracy">
+          <img
+              src="/images/improved_accuracy.png"
+              alt="Training Accuracy"
+              className="h-full w-full rounded object-contain"
+          />
         </ChartCard>
-        <ChartCard title="Loss over epochs">
-          <LineChart data={trainingCurves}>
-            <CartesianGrid stroke="#2A2A2E" vertical={false} />
-            <XAxis dataKey="epoch" {...AXIS} />
-            <YAxis {...AXIS} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line type="monotone" dataKey="trainLoss" stroke="#F5F5F5" dot={false} strokeWidth={1.5} name="train" />
-            <Line type="monotone" dataKey="valLoss" stroke="#FF6A1A" dot={false} strokeWidth={1.5} name="val" />
-          </LineChart>
+        <ChartCard title="Training Loss">
+          <img
+              src="/images/improved_loss.png"
+              alt="Training Loss"
+              className="h-full w-full rounded object-contain"
+          />
         </ChartCard>
       </div>
 
