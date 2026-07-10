@@ -130,5 +130,11 @@ def predict_frame():
         "emotion": emotion,
         "confidence": round(confidence, 2),
         "probabilities": probabilities,
-        "inference_time": round(inference_time, 2)
+        "inference_time": round(inference_time, 2),
+        "box": {
+        "x": int(x),
+        "y": int(y),
+        "w": int(w),
+        "h": int(h)
+    }
     })

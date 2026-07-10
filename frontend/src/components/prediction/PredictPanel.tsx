@@ -39,6 +39,18 @@ export function PredictPanel() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [videoSize, setVideoSize] = useState({
+    width: 0,
+    height: 0,
+  });
+
+  const [faceBox, setFaceBox] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
+
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [webcamRunning, setWebcamRunning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -184,6 +196,10 @@ const runPredict = async () => {
 
     try {
       const result = await mutation.mutateFrameAsync(image);
+      setFaceBox(result.box ?? null);
+
+      console.log(result);
+      console.log(result.box);
 
       if (!result.face_detected) {
         setFaceDetected(false);
@@ -194,6 +210,7 @@ const runPredict = async () => {
       setStage(6);
 
     } catch (err) {
+      setFaceBox(null);
       console.error(err);
     }
     };
@@ -316,8 +333,28 @@ const runPredict = async () => {
               autoPlay
               playsInline
               muted
+              onLoadedMetadata={(e) => {
+                const video = e.currentTarget;
+
+                setVideoSize({
+                  width: video.videoWidth,
+                  height: video.videoHeight,
+                });
+              }}
               className="h-full w-full object-cover scale-x-[-1]"
             />
+
+            {faceBox && videoSize.width > 0 && (
+              <div
+                className="absolute border-2 border-accent rounded-md shadow-[0_0_14px_rgba(249,115,22,0.45)] pointer-events-none"
+                style={{
+                  left: `${((videoSize.width - faceBox.x - faceBox.w) / videoSize.width) * 100}%`,
+                  top: `${(faceBox.y / videoSize.height) * 100}%`,
+                  width: `${(faceBox.w / videoSize.width) * 100}%`,
+                  height: `${(faceBox.h / videoSize.height) * 100}%`,
+                }}
+              />
+            )}
 
             {!faceDetected && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">

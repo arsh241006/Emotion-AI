@@ -13,6 +13,13 @@ export interface PredictionResult {
   confidence: number;
   inference_time: number;
   probabilities?: Record<Emotion, number>;
+
+  box?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
 }
 
 export async function predictEmotion(image: File): Promise<PredictionResult> {
