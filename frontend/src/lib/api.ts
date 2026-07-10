@@ -7,9 +7,11 @@ export const api = axios.create({
 });
 
 export interface PredictionResult {
+  face_detected?: boolean;
+
   emotion: Emotion;
   confidence: number;
-  inference_time: number;      // <-- add this
+  inference_time: number;
   probabilities?: Record<Emotion, number>;
 }
 
@@ -21,3 +23,13 @@ export async function predictEmotion(image: File): Promise<PredictionResult> {
   });
   return data;
 }
+
+export async function predictFrame(
+    image: string
+  ): Promise<PredictionResult> {
+    const { data } = await api.post<PredictionResult>("/predict-frame", {
+      image,
+    });
+
+    return data;
+  }

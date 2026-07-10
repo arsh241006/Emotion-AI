@@ -7,6 +7,8 @@ import { usePredictEmotion } from "@/hooks/usePredictEmotion";
 import { NetworkDiagram } from "@/components/diagram/NetworkDiagram";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { EMOTION_META } from "@/config/modelStats";
+import { usePredictionStore } from "@/store/predictionStore";
+import { CameraOff } from "lucide-react";
 
 const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,12 +28,19 @@ const PIPELINE_EDGES = PIPELINE_NODES.slice(0, -1).map((n, i) => ({
 }));
 
 export function PredictPanel() {
+  
+  const [faceDetected, setFaceDetected] = useState(true);
   const [tab, setTab] = useState<"upload" | "webcam">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [stage, setStage] = useState(-1);
   const [isAnimating, setIsAnimating] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [webcamRunning, setWebcamRunning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const stageTimer = useRef<number | null>(null);
   const mutation = usePredictEmotion();
@@ -47,6 +56,25 @@ export function PredictPanel() {
   }, [previewUrl, mutation]);
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => {
+    if (tab === "webcam") {
+      startWebcam();
+    } else {
+      stopWebcam();
+    }
+
+    return () => stopWebcam();
+  }, [tab]);
+
+  useEffect(() => {
+      if (!webcamRunning) return;
+
+      const interval = setInterval(() => {
+          captureFrame();
+      }, 500);
+
+      return () => clearInterval(interval);
+  }, [webcamRunning]);
 
 const runPredict = async () => {
   if (!file || !previewUrl) return;
@@ -99,9 +127,84 @@ const runPredict = async () => {
     setStage(-1);
   };
 
+  const startWebcam = async () => {
+    try {
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+        },
+      });
+
+      setStream(media);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = media;
+      }
+
+      setWebcamRunning(true);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to access webcam.");
+    }
+  };
+
+  const stopWebcam = () => {
+    stream?.getTracks().forEach(track => track.stop());
+
+    setStream(null);
+    setWebcamRunning(false);
+  };
+
+  const captureFrame = async () => {
+    if (
+      !videoRef.current ||
+      !canvasRef.current ||
+      !webcamRunning ||
+      mutation.isPending
+    ) {
+      return;
+    }
+
+    const video = videoRef.current;
+
+    if (video.readyState < 2) return;
+
+    const canvas = canvasRef.current;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0);
+
+    const image = canvas.toDataURL("image/jpeg", 0.8);
+
+    try {
+      const result = await mutation.mutateFrameAsync(image);
+
+      if (!result.face_detected) {
+        setFaceDetected(false);
+        return;
+      }
+
+      setFaceDetected(true);
+      setStage(6);
+
+    } catch (err) {
+      console.error(err);
+    }
+    };
+
   // Map stage to diagram active index (roughly proportional).
-  const diagramActive = Math.max(0, stage);
-  const result = mutation.data;
+  const diagramActive =
+    tab === "webcam"
+      ? 6
+      : Math.max(0, stage);
+  const result = usePredictionStore((s) => s.current);
+  const clearCurrent = usePredictionStore((s) => s.clearCurrent);
   const meta = result ? EMOTION_META[result.emotion] : null;
 
   return (
@@ -130,11 +233,7 @@ const runPredict = async () => {
               >
                 <t.icon className="h-3.5 w-3.5" aria-hidden="true" />
                 {t.label}
-                {t.id === "webcam" && (
-                  <span className="mono ml-1 rounded-sm border border-border px-1 text-[9px] uppercase tracking-widest text-text-tertiary">
-                    soon
-                  </span>
-                )}
+                {t.id === "webcam" }
               </button>
             );
           })}
@@ -210,19 +309,49 @@ const runPredict = async () => {
             </div>
           </>
         ) : (
-          <div className="flex aspect-square w-full flex-col items-center justify-center rounded-md border border-dashed border-border-strong bg-surface-raised p-6 text-center">
-            <Camera className="h-8 w-8 text-text-tertiary" aria-hidden="true" />
-            <div className="mt-3 text-sm text-text-primary">Webcam mode</div>
-            <p className="mono mt-2 max-w-xs text-xs text-text-secondary">
-              Real-time inference isn&apos;t wired up yet — the backend doesn&apos;t currently support
-              streaming or rapid-poll requests.
-            </p>
-            <span className="mono mt-4 rounded-sm border border-border px-2 py-0.5 text-[10px] uppercase tracking-widest text-text-tertiary">
-              coming soon
-            </span>
+          <div className="relative aspect-square w-full overflow-hidden rounded-md border border-border bg-black">
+
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="h-full w-full object-cover scale-x-[-1]"
+            />
+
+            {!faceDetected && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+                <div className="flex flex-col items-center rounded-xl border border-border bg-surface-raised/95 px-8 py-6 shadow-xl">
+
+                  <CameraOff
+                    className="mb-4 h-10 w-10 text-text-tertiary"
+                    strokeWidth={1.5}
+                  />
+
+                  <div className="mono text-[10px] uppercase tracking-[0.25em] text-text-tertiary">
+                    Live Detection
+                  </div>
+
+                  <div className="mt-2 text-xl text-text-primary">
+                    No face detected
+                  </div>
+
+                  <p className="mt-2 max-w-[220px] text-center text-sm text-text-secondary">
+                    Look towards the camera to continue real-time emotion detection.
+                  </p>
+
+                </div>
+              </div>
+            )}
+
+            <canvas
+              ref={canvasRef}
+              className="hidden"
+            />
+
           </div>
-        )}
-      </div>
+                  )}
+                </div>
 
       {/* Right — pipeline + result */}
       <div className="flex flex-col gap-6">
@@ -296,7 +425,7 @@ const runPredict = async () => {
             </div>
           )}
 
-          {result && meta && (
+          {faceDetected && result && meta && (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
