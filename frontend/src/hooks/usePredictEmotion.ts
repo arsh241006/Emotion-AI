@@ -33,7 +33,9 @@ export function usePredictEmotion() {
   >({
     mutationFn: (image) => predictFrame(image),
 
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
+      if (!data.face_detected) return;
+
       push({
         ...data,
         timestamp: Date.now(),
@@ -45,7 +47,6 @@ export function usePredictEmotion() {
 
   return {
     ...uploadMutation,
-
     mutateFrameAsync: webcamMutation.mutateAsync,
   };
 }
