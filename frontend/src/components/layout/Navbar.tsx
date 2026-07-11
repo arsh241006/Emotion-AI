@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { Github } from "lucide-react";
+import { Github , Menu, X  } from "lucide-react";
 import { Logo } from "./Logo";
+import { motion, AnimatePresence } from "framer-motion";
 
 
 const NAV = [
@@ -13,7 +14,10 @@ const NAV = [
   { to: "/api", label: "API" },
 ] as const;
 
+import { useState } from "react";
+
 export function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
@@ -45,16 +49,63 @@ export function Navbar() {
             </Link>
           ))}
         </nav>
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border-strong px-2.5 text-xs text-text-secondary hover:text-text-primary"
-        >
-          <Github className="h-3.5 w-3.5" aria-hidden="true" />
-          GitHub
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden md:inline-flex h-8 items-center gap-1.5 rounded-md border border-border-strong px-2.5 text-xs text-text-secondary hover:text-text-primary"
+          >
+            <Github className="h-3.5 w-3.5" />
+            GitHub
+          </a>
+
+          <button
+            className="md:hidden rounded-md p-2 text-text-secondary hover:bg-surface-raised"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.22 }}
+            className="border-t border-border bg-background md:hidden"
+          >
+            <div className="flex flex-col px-6 py-3">
+              {NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-md px-3 py-3 text-sm text-text-secondary transition-colors hover:bg-surface-raised hover:text-text-primary"
+                  activeProps={{
+                    className: "!text-text-primary bg-surface-raised",
+                  }}
+                  activeOptions={{ exact: item.to === "/" }}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              <a
+                href="https://github.com/arsh241006/Emotion-AI"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 rounded-md border border-border-strong px-3 py-3 text-sm text-text-secondary hover:text-text-primary"
+              >
+                <Github className="h-4 w-4" />
+                GitHub
+              </a>
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
