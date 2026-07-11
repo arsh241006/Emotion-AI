@@ -15,9 +15,10 @@ __pycache__/
 dataset/
 
 # Trained models
-saved_models/
+saved_models/*
+!saved_models/emotion_model_v2.keras
+
 *.h5
-*.keras
 *.weights.h5
 
 # Logs
