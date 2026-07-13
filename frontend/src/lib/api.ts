@@ -2,8 +2,8 @@ import axios from "axios";
 import type { Emotion } from "@/config/modelStats";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:5000",
-  timeout: 15000,
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:5000m",
+  timeout: 120000,
 });
 
 export interface PredictionResult {
