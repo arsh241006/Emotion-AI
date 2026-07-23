@@ -137,4 +137,5 @@ def predict_frame():
         "w": int(w),
         "h": int(h)
     }
+    
     })
